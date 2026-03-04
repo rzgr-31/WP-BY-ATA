@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Cyber Demo Panel</title>
+<style>
+body { margin:0; overflow:hidden; font-family:monospace; background:#000; }
+
+/* CREATOR TAG ORTA ÜST NEON + PULSE (KIRMIZI) */
+#creator-tag{
+  position: fixed; top: 20px; left: 50%;
+  transform: translateX(-50%) scale(1);
+  background: rgba(0,0,0,0.7);
+  color: #fff; font-weight: bold;
+  padding: 5px 15px;
+  border-radius: 8px;
+  border: 1px solid #ff0000;
+  z-index: 9999;
+  display:flex; align-items:center; gap:6px;
+  box-shadow: 0 0 5px #ff0000, 0 0 10px #ff000050, 0 0 20px #ff000030;
+  animation: neonGlow 2s infinite alternate, pulse 2s infinite alternate;
+}
+#creator-tag img{ width:24px; height:24px; }
+@keyframes neonGlow{ 0%{text-shadow:0 0 2px #ff0000;} 50%{text-shadow:0 0 6px #ff0000;} 100%{text-shadow:0 0 2px #ff0000;} }
+@keyframes pulse{ 0%{transform:translateX(-50%) scale(1);} 50%{transform:translateX(-50%) scale(1.05);} 100%{transform:translateX(-50%) scale(1);} }
+
+/* PAGE FADE */
+.page{ opacity:1; transition: opacity .6s ease; }
+.page.hidden{ opacity:0; pointer-events:none; }
+
+/* MATRIX */
+#matrix1, #matrix2{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; }
+
+/* PAGE1 */
+#page1{ display:block; }
+#page1 .container{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:min(420px, 92vw);
+  padding:30px;
+  border:1px solid #00ff00;
+  box-shadow:0 0 20px #00ff00;
+  text-align:center;
+  background: rgba(0,0,0,0.7);
+  color:#00ff00;
+  border-radius:12px;
+}
+#page1 .logo img{ width:90px; margin-bottom:15px; }
+#page1 input{
+  width:100%; padding:10px; margin-bottom:15px;
+  background:#000; border:1px solid #00ff00; color:#00ff00; outline:none;
+}
+#page1 button{
+  width:100%; padding:10px; background:#00ff00;
+  border:none; cursor:pointer; font-weight:bold; margin-bottom:10px;
+}
+#page1 button:hover{ background:#00cc00; }
+#page1 .terminal{ margin-top:20px; text-align:left; font-size:13px; min-height:140px; }
+
+/* KOD KUTUSU */
+#code-box{
+  margin-top:10px; padding:10px;
+  background: rgba(0,0,0,0.7);
+  border:1px solid #00ff00;
+  box-shadow:0 0 10px #00ff00;
+  color:#00ff00; font-weight:bold; font-size:18px;
+  display:none; border-radius:8px;
+}
+
+/* HATA KUTUSU */
+#error-box{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  padding:40px 26px; width:min(560px, 92vw);
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(10px);
+  border:2px solid rgba(255,0,0,.6);
+  color:#ff4a4a;
+  font-weight:bold; font-size:20px; text-align:center;
+  display:none; z-index:3000;
+  border-radius:15px;
+  box-shadow:0 0 20px rgba(255,0,0,.5);
+}
+#error-box button{
+  margin-top:20px; padding:10px 20px;
+  background:#ff0000; border:none;
+  font-weight:bold; color:#fff; cursor:pointer;
+  border-radius:8px;
+}
+#error-box button:hover{ background:#cc0000; }
+
+/* PAGE2 */
+#page2{
+  display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+  z-index:1000; color:#00ccff;
+}
+#matrix2{ position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; }
+
+/* PAGE2 KUTU */
+#page2-box{
+  position:absolute; top:100px; left:20px;
+  width:min(560px, 92vw);
+  padding:20px 18px;
+  background: rgba(0,0,0,0.85);
+  border:1px solid #aa00ff;
+  border-radius:12px;
+  box-shadow:0 0 15px #aa00ff;
+  animation:glow2 2s infinite alternate;
+  font-weight:bold;
+  color:#cc99ff;
+}
+@keyframes glow2{ 0%{box-shadow:0 0 10px #aa00ff;} 50%{box-shadow:0 0 20px #aa00ff;} 100%{box-shadow:0 0 15px #aa00ff;} }
+#wpTitle{ margin-right:10px; }
+#demoUser{ color:#fff; }
+
+/* PAGE2 EXTRA KUTULAR */
+#extraBoxes{ margin-top:15px; display:none; }
+.extra-box{
+  margin-top:10px;
+  padding:12px;
+  background: rgba(0,0,0,0.7);
+  border:1px solid #aa00ff;
+  border-radius:10px;
+  color:#e6ccff;
+  cursor:pointer;
+  transition:0.2s;
+}
+.extra-box:hover{
+  box-shadow:0 0 15px #aa00ff;
+  transform:scale(1.03);
+}
+
+/* PAGE2 GERİ */
+#backBtn{
+  position:absolute; top:20px; right:20px;
+  padding:10px 15px;
+  background: rgba(0,0,0,0.7);
+  border:1px solid #0099ff;
+  color:#00ccff;
+  font-weight:bold;
+  cursor:pointer;
+  border-radius:8px;
+}
+#backBtn:hover{ background:rgba(0,0,0,0.85); }
+
+/* MODAL */
+#adminWarning{
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:min(600px, 92vw);
+  background:rgba(0,0,0,0.86);
+  border:2px solid rgba(255,0,0,0.65);
+  border-radius:16px;
+  padding:28px 22px;
+  color:#ffd0d0;
+  font-weight:bold;
+  text-align:center;
+  display:none;
+  z-index:5000;
+  box-shadow:0 0 24px rgba(255,0,0,0.45);
+  line-height:1.35;
+}
+#adminWarning button{
+  margin-top:16px;
+  padding:10px 18px;
+  background:#ff0000;
+  border:none;
+  color:#fff;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+#adminWarning button:hover{ background:#cc0000; }
+
+/* PAGE3 */
+#page3{
+  display:none;
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  z-index:2000;
+  color:#ff6666;
+}
+#matrix3{ position:absolute; top:0; left:0; width:100%; height:100%; z-index:-1; }
+#page3-box{
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:min(720px, 92vw);
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(15px);
+  border:2px solid #ff0000;
+  border-radius:16px;
+  padding:34px 26px;
+  text-align:center;
+  font-weight:bold;
+  font-size:20px;
+  box-shadow:0 0 24px rgba(255,0,0,0.35);
+}
+#backBtn3{
+  position:absolute; top:20px; right:20px;
+  padding:10px 15px;
+  background: rgba(0,0,0,0.7);
+  border:1px solid #ff0000;
+  color:#ff6666;
+  font-weight:bold;
+  cursor:pointer;
+  border-radius:8px;
+}
+#backBtn3:hover{ box-shadow:0 0 15px #ff0000; }
+</style>
+</head>
+
+<body>
+<div id="creator-tag">
+  rzgr by. ATA
+  <img src="https://p1.hiclipart.com/preview/606/530/535/turk-bayrak-logolari-png-clipart.jpg" alt="Amblem">
+</div>
+
+<canvas id="matrix1"></canvas>
+
+<!-- PAGE1 -->
+<div id="page1" class="page">
+  <div class="container">
+    <div class="logo">
+      <img src="https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyNjNodXhneG5sbWtxeWRjeDV5bG9oZWwzdzE3ZzlwbnR0dGdxb2RtMCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/EY5vE2mzY2BqWAblWD/source.gif" alt="Logo">
+    </div>
+
+    <h2>WHATSAPP CYBER PANEL </h2>
+
+    <input type="text" id="phone" placeholder="Numara">
+    <input type="text" id="code" placeholder="Doğrulama Kodu">
+
+    <button id="generateCodeBtn">Kod Oluştur</button>
+    <div id="code-box"></div>
+
+    <button onclick="startHack()">Onayla</button>
+    <div class="terminal" id="terminal"></div>
+  </div>
+</div>
+
+<!-- ERROR -->
+<div id="error-box">
+  <div id="errorText">[-] Doğrulama Kodu Hatalı!</div>
+  <br><button id="errorBtn">Tamam</button>
+</div>
+
+<!-- PAGE2 -->
+<div id="page2" class="page">
+  <canvas id="matrix2"></canvas>
+
+  <div id="page2-box">
+    <div>
+      <span id="wpTitle">BULGU:</span><span id="demoUser"></span>
+    </div>
+
+    <div id="extraBoxes">
+      <div class="extra-box">Mesajlar.txt</div>
+      <div class="extra-box">Fotoğraf Ve Videolar</div>
+    </div>
+  </div>
+
+  <div id="backBtn">&#8592; Geri</div>
+</div>
+
+<!-- PAGE3 -->
+<div id="page3" class="page">
+  <canvas id="matrix3"></canvas>
+
+  <div id="page3-box">
+<br>
+BU NUMARAYA ERİŞMEK HERKESİN HARCI DEĞİLDİR!
+GÖTÜNÜZE DON GİYMEYİ ÖĞRENDİĞİNİZDE TEKRAR DENEYİNİZ.<br>
+  </div>
+
+  <div id="backBtn3">&#8592; Geri</div>
+</div>
+
+<!-- MODAL -->
+<div id="adminWarning">
+  Kullandığınız Hesap Admin Hesabı Değil,<br>
+  Talebiniz Admine İletildi,<br>
+  Onay Sonrası Görüntüleme Sağlayabilirsiniz.
+  <br>
+  <button onclick="closeWarning()">Tamam</button>
+</div>
+
+<script>
+/* MATRIX SETUP */
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()*&^%".split("");
+const fontSize = 16;
+
+const canvas1 = document.getElementById("matrix1");
+const ctx1 = canvas1.getContext("2d");
+
+const canvas2 = document.getElementById("matrix2");
+const ctx2 = canvas2.getContext("2d");
+
+const canvas3 = document.getElementById("matrix3");
+const ctx3 = canvas3.getContext("2d");
+
+function resizeAll(){
+  canvas1.width = window.innerWidth; canvas1.height = window.innerHeight;
+  canvas2.width = window.innerWidth; canvas2.height = window.innerHeight;
+  canvas3.width = window.innerWidth; canvas3.height = window.innerHeight;
+  drops1 = Array(Math.floor(canvas1.width/fontSize)).fill(1);
+  drops2 = Array(Math.floor(canvas2.width/fontSize)).fill(1);
+  drops3 = Array(Math.floor(canvas3.width/fontSize)).fill(1);
+}
+window.addEventListener("resize", resizeAll);
+
+let drops1 = Array(Math.floor(window.innerWidth/fontSize)).fill(1);
+let drops2 = Array(Math.floor(window.innerWidth/fontSize)).fill(1);
+let drops3 = Array(Math.floor(window.innerWidth/fontSize)).fill(1);
+
+function drawMatrix(ctx, canvas, drops, color, aggressive){
+  ctx.fillStyle = "rgba(0,0,0,0.05)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = color;
+  ctx.font = fontSize + "px monospace";
+
+  for(let i=0;i<drops.length;i++){
+    const t = letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(t, i*fontSize, drops[i]*fontSize);
+    if(drops[i]*fontSize > canvas.height && Math.random() > (aggressive ? 0.92 : 0.975)){
+      drops[i] = 0;
+    }
+    drops[i]++;
+  }
+}
+
+setInterval(()=> drawMatrix(ctx1, canvas1, drops1, "#0F0", false), 50);
+setInterval(()=> drawMatrix(ctx2, canvas2, drops2, "#00ccff", true), 35);
+setInterval(()=> drawMatrix(ctx3, canvas3, drops3, "#ff0000", true), 35);
+
+/* DEMO DATA */
+const bulgular = {
+  "5060365196": "Emirhan Olabilir.",
+  "5370657726": "Serhat Olabilir."
+  // buraya ekle:
+  // "5551112233": "Ali Olabilir."
+};
+
+function isRegistered(cleanPhone){
+  return Object.prototype.hasOwnProperty.call(bulgular, cleanPhone);
+}
+
+/* ERROR HELPER */
+function showError(msg){
+  document.getElementById("errorText").innerText = msg;
+  document.getElementById("error-box").style.display = "block";
+}
+
+/* CODE GENERATE */
+let generatedCode="";
+document.getElementById("generateCodeBtn").addEventListener("click", ()=>{
+  const rnd = Math.floor(1000 + Math.random()*9000);
+  generatedCode = "31" + rnd;
+  const cb = document.getElementById("code-box");
+  cb.innerText = "Doğrulama Kodu: " + generatedCode;
+  cb.style.display = "block";
+});
+
+/* PAGE SWITCH */
+function showOnly(pageId){
+  const ids = ["page1","page2","page3"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    el.style.display = (id===pageId) ? "block" : "none";
+    el.classList.remove("hidden");
+  });
+
+  canvas1.style.display = (pageId==="page1") ? "block" : "none";
+  canvas2.style.display = (pageId==="page2") ? "block" : "none";
+  canvas3.style.display = (pageId==="page3") ? "block" : "none";
+}
+
+/* START */
+function startHack(){
+  const term = document.getElementById("terminal");
+  const codeInput = document.getElementById("code").value.trim();
+  const phoneRaw = document.getElementById("phone").value.trim();
+  const errBox = document.getElementById("error-box");
+
+  term.innerHTML = "";
+  errBox.style.display = "none";
+
+  // ✅ NUMARA 10 HANE KONTROL (0 OLMADAN, BİTİŞİK)
+  const cleanPhone = phoneRaw.replace(/\s/g,"");
+  if(!/^\d{10}$/.test(cleanPhone)){
+    showError('Numaranın Başında "0" Olmadan Ve Bitişik Yazınız');
+    return;
+  }
+
+  const lines=[
+    "[+] Güvenli bağlantı kuruluyor...",
+    "[+] Oturum şifreleniyor...",
+    "[+] Kimlik doğrulanıyor...",
+    "[+] Erişim sağlandı...",
+    "[+] Senkronizasyon tamamlandı."
+  ];
+
+  let i=0;
+  function typeLine(){
+    if(i<lines.length){
+      term.innerHTML += `<span style="color:#00ff00">${lines[i]}</span><br>`;
+      i++;
+      setTimeout(typeLine, 700);
+    } else {
+      if(codeInput !== generatedCode){
+        setTimeout(()=>{ showError("[-] Doğrulama Kodu Hatalı!"); }, 600);
+      } else {
+        if(cleanPhone === "5313233169") showPage3();
+        else showPage2(cleanPhone);
+      }
+    }
+  }
+  typeLine();
+}
+
+/* PAGE2 */
+function showPage2(clean){
+  const demoUser=document.getElementById("demoUser");
+  const extra = document.getElementById("extraBoxes");
+
+  if(isRegistered(clean)){
+    demoUser.innerText = " " + bulgular[clean];
+    extra.style.display = "block";
+  } else {
+    demoUser.innerText = " HATA (SİSTEMDE 1'DEN FAZLA ADMİN AKTİF OLDUĞU İÇİN YENİ SORGULAR YAPAMAZSINIZ, DAHA ÖNCE YAPTIĞINIZ SORGULARI GÖRÜNTÜLEYEBİLİRSİNİZ.).";
+    extra.style.display = "none";
+  }
+
+  showOnly("page2");
+
+  const box=document.getElementById("page2-box");
+  box.style.transform="translateX(-2px)";
+  setTimeout(()=>{ box.style.transform="translateX(0)"; },50);
+}
+
+/* PAGE3 */
+function showPage3(){ showOnly("page3"); }
+
+/* BACK BUTTONS */
+document.getElementById("backBtn").addEventListener("click", ()=> showOnly("page1"));
+document.getElementById("backBtn3").addEventListener("click", ()=> showOnly("page1"));
+
+/* ERROR CLOSE */
+document.getElementById("errorBtn").addEventListener("click", ()=>{
+  document.getElementById("error-box").style.display="none";
+});
+
+/* MODAL */
+function closeWarning(){ document.getElementById("adminWarning").style.display="none"; }
+document.addEventListener("click", (e)=>{
+  if(e.target.classList.contains("extra-box")){
+    document.getElementById("adminWarning").style.display="block";
+  }
+});
+
+/* init */
+resizeAll();
+showOnly("page1");
+</script>
+</body>
+</html>
